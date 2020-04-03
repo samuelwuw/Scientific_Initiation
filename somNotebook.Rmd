@@ -1,0 +1,159 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+tutorial usado: https://www.r-bloggers.com/self-organising-maps-for-customer-segmentation-using-r/
+
+```{r}
+getwd()
+#setwd("C:/aavallim2016/SCRIPTS_R/IC - Samuel")
+setwd("/media/lbm06/SHEMUELS/SistemasDeInform/IC")
+
+#E:/SistemasDeInform/IC/SOM
+#/media/lbm06/SHEMUELS/SistemasDeInform/IC
+library(kohonen)
+require(kohonen)
+```
+
+criação de grade e importação de base de dados 
+```{r}
+df <- read.csv('uscitiesCsv.csv', header = TRUE, sep = ",")
+
+# DATA FRAME de wASHINGTON com 4 Vari?veis
+# Latitude, Longitude, Populacao e Densidade Demografica
+
+df1 <- df[1:620, c(9,10,11,12)]
+View(df1)
+
+dfWisconsin <- df[699:1469, c(9,10,11,12)] # DATA FRAME COM WISCONSIN e 4 Vari?veis
+data_train_matrix <- as.matrix(scale(df1)) # Normaliza??o dos Dados
+data_train_matrix_wisconsin <- as.matrix(scale(dfWisconsin))# Normaliza??o dos Dados
+
+
+som_grid <- somgrid(xdim = 6, ydim = 6, topo="hexagonal") # SOM 6x6, hexagonal
+```
+
+criação de modelos de SOM 
+```{r}
+#modelo de wasghington
+# som_model <- som(data_train_matrix, 
+  #               grid=som_grid,  
+   #              rlen=100, 
+    #             alpha=c(0.05,0.01), 
+     #            keep.data = TRUE,
+      #           radius = 5)
+som_model <- som(data_train_matrix, 
+                 grid=som_grid,  
+                 rlen=100, 
+                 alpha=c(0.05,0.01), 
+                 keep.data = TRUE)
+
+#modelo de wisconsin
+som_model_wisconsin <- som(data_train_matrix_wisconsin, 
+                 grid=som_grid,  
+                 rlen=100, 
+                 alpha=c(0.05,0.01), 
+                 keep.data = TRUE)
+
+```
+
+Plot do modelo
+Changes: progresso do treinamento(iterações)
+Count: Quantidade de amostras mapeadas em cada node no mapa - nodes = centroides 
+dist.neighbours: Distãncia entre cada node
+Codes:a list of matrices containing codebook vectors.
+unit.classif: localização do elemento no mapa (número do node)
+```{r}
+img_plot <- plot(som_model, type="changes")
+
+img2_plot <- plot(som_model, type="count", main = "node counts")
+
+img3_plot <- plot(som_model, type="dist.neighbours", main = "SOM neighbour distances") 
+
+img4_plot <- plot(som_model, type="codes", main = "codes") 
+
+som_model$unit.classif 
+
+#heatmaps:
+#allows the visualisation of the distribution of a single variable across the map
+plot(som_model, type = "property", 
+     property = getCodes(som_model)[,1],
+     main=colnames(getCodes(som_model))[1]) 
+plot(som_model, type = "property",
+     property = getCodes(som_model)[,2],
+     main=colnames(getCodes(som_model))[2]) 
+plot(som_model, type = "property",
+     property = getCodes(som_model)[,3],
+     main=colnames(getCodes(som_model))[3]) 
+plot(som_model, type = "property", 
+     property = getCodes(som_model)[,4], 
+     main=colnames(getCodes(som_model))[4]) 
+```
+
+###########################################################################
+
+################## CLUSTERIZACAO dos NEURONIOS do SOM #####################
+
+###########################################################################
+```{r}
+
+
+ # Montagem de DF com os Neur?nios do SOM para Washington
+mydata <- as.data.frame(som_model$codes)
+View(mydata)
+
+# Montagem de DF com os Neur?nios do SOM para Wisconsin
+mydata_wisconsin <- as.data.frame(som_model_wisconsin$codes)
+View(mydata_wisconsin)
+
+
+# cALCULANDO sOMAS DE qUADRADOS (Vari?ncias) para o Mydata - WASHINGTON
+wss <- (nrow(mydata)-1)*sum(apply(mydata,2,var)) 
+
+######### Clusteriza??o dos N?s do SOM, pelo K-means (variando o K) ###########
+# Registra a Varia??o Interna (WSS) de cada Cluster e Soma essas varia??es
+
+for (i in 2:15) {
+  wss[i] <- sum(kmeans(mydata, centers=i)$withinss)
+}
+
+
+###############################################################################
+
+
+# Plotagem do Gr?fico de Cotovelo - WSS vs. K
+plot(wss, main = "nrow*variances")
+
+pretty_palette <- c("#1f77b4", '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2')
+
+
+
+
+
+
+################# Hierarchical Clustering - hclust() ###########################
+
+###############  Distance Matrix Computation dist()  ####################
+
+##### Monta Clusters da Matriz de Distancias entre os Neuronios ###########
+
+#### cuttree()  -  Cut a Tree into Groups of Data
+### Cuts a tree, e.g., as resulting from hclust, into several groups either by specifying the desired number(s) of groups or the cut height(s)
+#### cutree(tree, k = NULL, h = NULL)
+
+som_cluster <- cutree(hclust(dist(as.data.frame(som_model$codes))), 6)
+som_cluster
+
+plot(som_cluster)
+
+plot(som_model, type="mapping", bgcol = pretty_palette[som_cluster], main = "Clusters") 
+
+add.cluster.boundaries(som_model, som_cluster)
+
+
+#  sem uso ===>>>  testeDist <- dist(as.data.frame(som_model$codes))
+
+
+```
