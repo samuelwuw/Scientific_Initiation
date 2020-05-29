@@ -1,15 +1,15 @@
 getwd()
-setwd("C:/Users/samue/Documents/www/IC/SOM_IC/Scientific_Initiation")
+setwd("C:/Users/samue/Documents/www/IC/Scientific_Initiation/src")
 
 library(kohonen)
 require(kohonen)
 
-df <- read.csv('uscitiesCsv.csv', header = TRUE, sep = ",")
+df <- read.csv('database/uscitiesCsv.csv', header = TRUE, sep = ",")
 
-# DATA FRAME de Delaware com 2 Vari?veis (latitude e longitude), 77 exemplares
+# Dellaware DATA FRAME with 2 Var (latitude and longitude), 77 cities
 df_del <- df[621:697, c(9,10)] 
 
-# Normalizacao dos Dados
+# data normalization
 data_train_matrix <- as.matrix(scale(df_del)) 
 
 som_grid <- somgrid(xdim = 4, ydim = 4, topo="hexagonal") # SOM 6x6, hexagonal
@@ -22,7 +22,7 @@ som_model <- som(data_train_matrix,
                  keep.data = TRUE,
                  radius = 5)
 
-#plots do modelo SOM
+#plots of SOM model
 plot(som_model, type="changes")
 
 #quantidade de amostras mapeadas em cada node (centroide)
