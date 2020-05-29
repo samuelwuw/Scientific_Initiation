@@ -1,5 +1,5 @@
 getwd()
-setwd("C:Users/samue/Documents/www/IC/SOM_IC")
+setwd("C:/Users/samue/Documents/www/IC/SOM_IC/Scientific_Initiation")
 
 library(kohonen)
 require(kohonen)
@@ -102,14 +102,26 @@ library(ggplot2)
 require(ggplot2)
 
 grid_size <- 2.3
-#vetor com distâncias entre os customers e warehouses
-distanceVector <- c()
-costVecotr <- c()
+#vetor com distâncias entre os customers e warehouses, e centroides para sua media 
+customerDistanceVector <- c()
+centroidDistanceVector <- c()
+customerCostVector <- c()
+centroidCostVector <- c()
 #indica a qual warehouse cada customer está atrelado
 localiz <- as.matrix(som_model$unit.classif)
+m <- 16 #usado em warehouse locations, id
+n <- 77 #usado em customer locations, id 
+D <- 0
+x_mean <- mean(centroides[,1]) #media x dos centroides  
+y_mean <- mean(centroides[,2]) #media y dos centroides
+centroid_id <- 16
 
+#calcula o custo do transporte entre o ponto de demanda e o seu armazÃ©m
+distanc <- function(Xc, Yc, Xw, Yw){
+  distance <- sqrt((Xw-Xc)**2+(Yw-Yc)**2)
+  return(distance)
+}
 
-m <- 16
 warehouse_locations <- data.frame(
   id = 1:m,
   x = centroides[,1],
@@ -118,7 +130,6 @@ warehouse_locations <- data.frame(
 View(warehouse_locations)
 summary(localiz)
 
-n <- 77
 customer_locations <- data.frame(
   id = 1:n,
   x = data_train_matrix[,1],
@@ -127,25 +138,33 @@ customer_locations <- data.frame(
 )
 View(customer_locations)
 
-#calcula o custo do transporte entre o ponto de demanda e o seu armazÃ©m
-distanc <- function(Xc, Yc, Xw, Yw){
-  distance <- sqrt((Xw-Xc)**2+(Yw-Yc)**2)
-  return(distance)
+for(val in 1:centroid_id){
+  D <- distanc(centroides$lat[[val]], centroides$lng[[val]], 
+               x_mean, y_mean)
+  
+  centroidDistanceVector[val] <- D 
 }
+View(centroidDistanceVector)
 
-D <- 0
+centroid_dist_to_mean <- data.frame(
+  id = 1:centroid_id,
+  x = centroides[,1],
+  y = centroides[,2],
+  dist = centroidDistanceVector
+  #cost
+)
+View(centroid_dist_to_mean)
+
 for(val in customer_locations$id){
   D <- distanc(customer_locations$x[[val]], customer_locations$y[[val]],
           warehouse_locations$x[[customer_locations$localiz[[val]]]], 
           warehouse_locations$y[[customer_locations$localiz[[val]]]])
   
-  distanceVector[val] <- D 
-  costVecotr[val] <- D * 2.5
+  customerDistanceVector[val] <- D 
+  customerCostVector[val] <- D * 2.5
   
 }
-View(distanceVector)
-View(distanceVector)
-
+View(customerDistanceVector)
 
 
 #PLOT principal
@@ -159,6 +178,9 @@ p <- ggplot(customer_locations, aes(x, y)) +
         axis.text = element_blank(), panel.grid = element_blank())
 p + ggtitle("Warehouse location problem", 
             "Black dots are customers. Light red triangles show potential warehouse locations.")
+
+
+
 
 
 
