@@ -104,9 +104,16 @@ require(ggplot2)
 grid_size <- 2.3
 #vetor com distâncias entre os customers e warehouses, e centroides para sua media 
 customerDistanceVector <- c()
+
+#vetor com distâncias entre a média da posição dos centroides, e cada um deles
 centroidDistanceVector <- c()
+
+#vector with costs based in distance
+centroid_costPerSquareMeter <- c()
+
 customerCostVector <- c()
 centroidCostVector <- c()
+
 #indica a qual warehouse cada customer está atrelado
 localiz <- as.matrix(som_model$unit.classif)
 m <- 16 #usado em warehouse locations, id
@@ -122,14 +129,7 @@ distanc <- function(Xc, Yc, Xw, Yw){
   return(distance)
 }
 
-warehouse_locations <- data.frame(
-  id = 1:m,
-  x = centroides[,1],
-  y = centroides[,2]
-)
-View(warehouse_locations)
-summary(localiz)
-
+#data frame customer locations
 customer_locations <- data.frame(
   id = 1:n,
   x = data_train_matrix[,1],
@@ -138,6 +138,9 @@ customer_locations <- data.frame(
 )
 View(customer_locations)
 
+
+#data frame warehouse location;
+#calculation of dist of centroid locations mean, and locations
 for(val in 1:centroid_id){
   D <- distanc(centroides$lat[[val]], centroides$lng[[val]], 
                x_mean, y_mean)
@@ -146,15 +149,39 @@ for(val in 1:centroid_id){
 }
 View(centroidDistanceVector)
 
-centroid_dist_to_mean <- data.frame(
+#def of quartiles of distances between centroids mean and its locations
+quartile1 <- quantile(centroidDistanceVector, 0.25)
+quartile2 <- quantile(centroidDistanceVector, 0.5) 
+quartile3 <- quantile(centroidDistanceVector, 0.75) 
+
+for(val in 1:centroid_id){
+  if(centroidDistanceVector[val] <= quartile1){
+    centroid_costPerSquareMeter[val] <- 2000
+  } 
+  if(centroidDistanceVector[val] > quartile1 && centroidDistanceVector[val] <= quartile2){
+    centroid_costPerSquareMeter[val] <- 1500
+  } 
+  if(centroidDistanceVector[val] > quartile2 && centroidDistanceVector[val] <= quartile3){
+    centroid_costPerSquareMeter[val] <- 1000
+  } 
+  if(centroidDistanceVector[val] > quartile3 ){
+    centroid_costPerSquareMeter[val] <- 500
+  } 
+} 
+View(centroid_costPerSquareMeter)
+
+warehouse_locations <- data.frame(
   id = 1:centroid_id,
   x = centroides[,1],
   y = centroides[,2],
-  dist = centroidDistanceVector
-  #cost
+  dist_to_mean = centroidDistanceVector,
+  cost_per_square_meter = centroid_costPerSquareMeter
 )
-View(centroid_dist_to_mean)
+View(warehouse_locations)
+summary(localiz)
 
+
+#calc of dist between customer and respectives warehouses
 for(val in customer_locations$id){
   D <- distanc(customer_locations$x[[val]], customer_locations$y[[val]],
           warehouse_locations$x[[customer_locations$localiz[[val]]]], 
