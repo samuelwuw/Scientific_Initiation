@@ -156,7 +156,7 @@ quartile3 <- quantile(centroidDistanceVector, 0.75)
 
 for(val in 1:centroid_id){
   if(centroidDistanceVector[val] <= quartile1){
-    centroid_costPerSquareMeter[val] <- 2000
+    centroid_costPerSquareMeter[val] <- 2000 #custo por metro quadrado
   } 
   if(centroidDistanceVector[val] > quartile1 && centroidDistanceVector[val] <= quartile2){
     centroid_costPerSquareMeter[val] <- 1500
@@ -184,31 +184,33 @@ summary(localiz)
 #calc of dist between customer and respectives warehouses
 for(val in customer_locations$id){
   D <- distanc(customer_locations$x[[val]], customer_locations$y[[val]],
-          warehouse_locations$x[[customer_locations$localiz[[val]]]], 
+          warehouse_locations$x[[customer_locations$localiz[[val]]]],
           warehouse_locations$y[[customer_locations$localiz[[val]]]])
   
   customerDistanceVector[val] <- D 
   customerCostVector[val] <- D * 2.5
-  
 }
 View(customerDistanceVector)
 
-
 #PLOT principal
-p <- ggplot(customer_locations, aes(x, y)) + 
-  geom_point() + 
+p <- ggplot(customer_locations, aes(x, y)) +
+  geom_point() +
   geom_point(data = warehouse_locations, color = "red", alpha = 0.5, shape = 17) +
   scale_x_continuous(limits = c(-1.6, grid_size)) +
   scale_y_continuous(limits = c(-1.6, grid_size)) +
-  theme(axis.title = element_blank(), 
-        axis.ticks = element_blank(), 
+  theme(axis.title = element_blank(),
+        axis.ticks = element_blank(),
         axis.text = element_blank(), panel.grid = element_blank())
-p + ggtitle("Warehouse location problem", 
+p + ggtitle("Warehouse location problem",
             "Black dots are customers. Light red triangles show potential warehouse locations.")
 
 
+# Somar as populações das 77 cidades de delaware
+# Dividir a população de cada cidade pelo total somado
+# Pegar o resultado de cada divisão (77 indices), e multiplica pela população real (google) de delaware
+# O resultado será a população aproximada de cada cidade
 
-
-
-
+# Depois vamos estabelecer um valor de m² de armazém por habitante 
+# Multiplica esse valor pela população de cada cidade = tamanho de cada armazén na cidade
+# multiplicar pelos custos por M² que já estão no data frame
 
