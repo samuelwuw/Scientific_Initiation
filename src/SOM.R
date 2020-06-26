@@ -101,6 +101,9 @@ plot(data_train_matrix)
 library(ggplot2)
 require(ggplot2)
 
+#population
+df_del_population <- df[621:697, c(1,11)] #population column
+
 grid_size <- 2.3
 #vetor com distâncias entre os customers e warehouses, e centroides para sua media 
 customerDistanceVector <- c()
@@ -116,6 +119,7 @@ centroidCostVector <- c()
 
 #indica a qual warehouse cada customer está atrelado
 localiz <- as.matrix(som_model$unit.classif)
+
 m <- 16 #usado em warehouse locations, id
 n <- 77 #usado em customer locations, id 
 D <- 0
@@ -134,7 +138,9 @@ customer_locations <- data.frame(
   id = 1:n,
   x = data_train_matrix[,1],
   y = data_train_matrix[,2],
-  localiz
+  localiz,
+  population = df_del_population$population
+  
 )
 View(customer_locations)
 
@@ -170,12 +176,24 @@ for(val in 1:centroid_id){
 } 
 View(centroid_costPerSquareMeter)
 
+#soma a população de cada centroide
+clustPop <- c(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+for(i in 1:m){
+  for(j in 1:n){
+    if(customer_locations$localiz[j] == i){
+      clustPop[i] <- clustPop[i] + customer_locations$population[j]
+    }
+  }
+}
+View(clustPop)
+
 warehouse_locations <- data.frame(
   id = 1:centroid_id,
   x = centroides[,1],
   y = centroides[,2],
   dist_to_mean = centroidDistanceVector,
-  cost_per_square_meter = centroid_costPerSquareMeter
+  cost_per_square_meter = centroid_costPerSquareMeter,
+  clustPop
 )
 View(warehouse_locations)
 summary(localiz)
@@ -206,11 +224,38 @@ p + ggtitle("Warehouse location problem",
 
 
 # Somar as populações das 77 cidades de delaware
-# Dividir a população de cada cidade pelo total somado
-# Pegar o resultado de cada divisão (77 indices), e multiplica pela população real (google) de delaware
+# Dividir a população de cada cidade pelo total somado (dplyr package)
+# Pegar o resultado de cada divisão (77 indices), e multiplica pela população real (google) de delaware (var realPop)
 # O resultado será a população aproximada de cada cidade
 
-# Depois vamos estabelecer um valor de m² de armazém por habitante 
+
+# Depois vamos estabelecer um valor de m² de armazém por habitante (1m² por habitante)
 # Multiplica esse valor pela população de cada cidade = tamanho de cada armazén na cidade
 # multiplicar pelos custos por M² que já estão no data frame
+# adicionar 2 colunas ao warehouse locations:
+# uma será o tamanho du cluster ( a área de armazén = população * parmetro p)
+# a outra coluna custo total será o custo do armazén, que será a área do armazén * custo por m²
+
+
+
+View(df_del_population)
+delaware_real_population <- 973764
+pop_sum <- sum(df_del_population$population) #sum the column
+
+library(dplyr)
+df_del_population <- df_del_population %>%
+  mutate(divis = population/pop_sum)
+
+divis_sum <- sum(df_del_population$divis) #check, the sum of this column must be 1
+
+df_del_population <- df_del_population %>%
+  mutate(realPop = round(divis*delaware_real_population))
+
+df_del_population <- df_del_population %>%
+  mutate(warehouseSize = realPop*0.5)
+
+View(df_del_population)
+
+
+
 
