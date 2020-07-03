@@ -7,7 +7,7 @@ require(kohonen)
 df <- read.csv('database/uscitiesCsv.csv', header = TRUE, sep = ",")
 
 # Dellaware DATA FRAME with 2 Var (latitude and longitude), 77 cities
-df_del <- df[621:697, c(9,10)] 
+df_del <- df[621:697, c(9,10,11)] 
 
 # data normalization
 data_train_matrix <- as.matrix(scale(df_del)) 
@@ -43,6 +43,9 @@ plot(som_model, type = "property",
 plot(som_model, type = "property",
      property = getCodes(som_model)[,2],
      main=colnames(getCodes(som_model))[2]) 
+plot(som_model, type = "property",
+     property = getCodes(som_model)[,3],
+     main=colnames(getCodes(som_model))[3]) 
 
 
 # Montagem de DF com os Neur?nios do SOM para Washington
@@ -145,7 +148,6 @@ customer_locations <- data.frame(
 View(customer_locations)
 
 
-#data frame warehouse location;
 #calculation of dist of centroid locations mean, and locations
 for(val in 1:centroid_id){
   D <- distanc(centroides$lat[[val]], centroides$lng[[val]], 
@@ -187,13 +189,25 @@ for(i in 1:m){
 }
 View(clustPop)
 
+
+#calc of warehouse size and cost
+warehouse_costs <- c(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+warehouse_size <- c(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+meter_per_habitant <- 1
+for(i in 1:16){
+  warehouse_size[i] <- clustPop[i] * meter_per_habitant
+  warehouse_costs[i] <- warehouse_size[i] * centroid_costPerSquareMeter[i]
+}
+
 warehouse_locations <- data.frame(
   id = 1:centroid_id,
   x = centroides[,1],
   y = centroides[,2],
-  dist_to_mean = centroidDistanceVector,
-  cost_per_square_meter = centroid_costPerSquareMeter,
-  clustPop
+  dist_to_mean = centroidDistanceVector, #dist of each waarehouse to all warehouse mean
+  cost_per_square_meter = centroid_costPerSquareMeter, #cost based on dist_to_mean quartiles (line 162)
+  total_population = clustPop,
+  warehouse_size = warehouse_size, #size based on population 
+  warehouse_costs = warehouse_costs #cost based on warehouse_size and cost_per_square_meter
 )
 View(warehouse_locations)
 summary(localiz)
@@ -222,7 +236,6 @@ p <- ggplot(customer_locations, aes(x, y)) +
 p + ggtitle("Warehouse location problem",
             "Black dots are customers. Light red triangles show potential warehouse locations.")
 
-
 # Somar as populações das 77 cidades de delaware
 # Dividir a população de cada cidade pelo total somado (dplyr package)
 # Pegar o resultado de cada divisão (77 indices), e multiplica pela população real (google) de delaware (var realPop)
@@ -232,12 +245,22 @@ p + ggtitle("Warehouse location problem",
 # Depois vamos estabelecer um valor de m² de armazém por habitante (1m² por habitante)
 # Multiplica esse valor pela população de cada cidade = tamanho de cada armazén na cidade
 # multiplicar pelos custos por M² que já estão no data frame
+
 # adicionar 2 colunas ao warehouse locations:
 # uma será o tamanho du cluster ( a área de armazén = população * parmetro p)
 # a outra coluna custo total será o custo do armazén, que será a área do armazén * custo por m²
 
+# melhorar vetor de custo de transporte, adicionando o custo de cada cidade para todos os armazéns (16), 
+# para assim vermos quais armazéns são os melhores
+# tentar recriar função de "transport cost" do warehouse locations
 
 
+
+
+
+
+
+##################################### population data normalization (not used) ######################
 View(df_del_population)
 delaware_real_population <- 973764
 pop_sum <- sum(df_del_population$population) #sum the column
@@ -255,6 +278,7 @@ df_del_population <- df_del_population %>%
   mutate(warehouseSize = realPop*0.5)
 
 View(df_del_population)
+#######################################################################################################
 
 
 

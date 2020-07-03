@@ -7,10 +7,11 @@ plot(coor)
 install.packages("tbart")
 library(tbart)
 
-coor<-cbind(x,y)
+#vec com coordenadas x e y dos pontos (customers)
+coor<-cbind(x,y) 
 
 # função allocate
-alocar <- allocate(coor,p=5)
+alocar <- allocate(coor,p=5) 
 
 diagrama <- star.diagram(coor,alloc=alocar)
 

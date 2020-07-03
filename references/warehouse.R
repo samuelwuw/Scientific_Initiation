@@ -41,7 +41,7 @@ p + ggtitle("Warehouse location problem",
             "Black dots are customers. Light red triangles show potential warehouse locations.")
 #
 #---------------model in ompr
-#
+#################objetivo#####################
 library(ompr)
 library(magrittr)
 model <- MIPModel() %>%
