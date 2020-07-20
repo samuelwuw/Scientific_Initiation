@@ -224,7 +224,50 @@ for(val in customer_locations$id){
 }
 View(customerDistanceVector)
 
-#PLOT principal
+#transport cost calculation
+calc_transport_dist <- function(id){
+  vec <- c(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+           0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+           0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+           0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+           0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+  for(centroid_counter in 1:77){
+    D <- distanc(customer_locations$x[[centroid_counter]], customer_locations$y[[centroid_counter]],
+                 warehouse_locations$x[[id]], warehouse_locations$y[[id]])
+    
+    vec[centroid_counter] <- D
+  }
+  
+  return(vec)
+}  
+
+transport_cost <- data.frame(
+  centroide1 = calc_transport_dist(1), 
+  centroide2 = calc_transport_dist(2), 
+  centroide3 = calc_transport_dist(3), 
+  centroide4 = calc_transport_dist(4), 
+  centroide5 = calc_transport_dist(5), 
+  centroide6 = calc_transport_dist(6), 
+  centroide7 = calc_transport_dist(7), 
+  centroide8 = calc_transport_dist(8),
+  centroide9 = calc_transport_dist(9), 
+  centroide10 = calc_transport_dist(10), 
+  centroide11 = calc_transport_dist(11), 
+  centroide12 = calc_transport_dist(12), 
+  centroide13 = calc_transport_dist(13),
+  centroide14 = calc_transport_dist(14), 
+  centroide15 = calc_transport_dist(15), 
+  centroide16 = calc_transport_dist(16)
+  )
+View(transport_cost)
+
+#prove
+print(
+  distanc(customer_locations$x[[1]], customer_locations$y[[1]],
+        warehouse_locations$x[[1]], warehouse_locations$y[[1]])
+)
+
+#principal PLOT
 p <- ggplot(customer_locations, aes(x, y)) +
   geom_point() +
   geom_point(data = warehouse_locations, color = "red", alpha = 0.5, shape = 17) +
@@ -253,8 +296,6 @@ p + ggtitle("Warehouse location problem",
 # melhorar vetor de custo de transporte, adicionando o custo de cada cidade para todos os armazéns (16), 
 # para assim vermos quais armazéns são os melhores
 # tentar recriar função de "transport cost" do warehouse locations
-
-
 
 
 
