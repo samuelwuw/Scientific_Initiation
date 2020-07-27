@@ -219,7 +219,7 @@ for(val in customer_locations$id){
           warehouse_locations$x[[customer_locations$localiz[[val]]]],
           warehouse_locations$y[[customer_locations$localiz[[val]]]])
   
-  customerDistanceVector[val] <- D 
+  customerDistanceVector[val] <- D
   customerCostVector[val] <- D * 2.5
 }
 View(customerDistanceVector)
@@ -235,11 +235,11 @@ calc_transport_dist <- function(id){
     D <- distanc(customer_locations$x[[centroid_counter]], customer_locations$y[[centroid_counter]],
                  warehouse_locations$x[[id]], warehouse_locations$y[[id]])
     
-    vec[centroid_counter] <- D
+    vec[centroid_counter] <- D * 2.5
   }
   
   return(vec)
-}  
+}
 
 transport_cost <- data.frame(
   centroide1 = calc_transport_dist(1), 
@@ -253,12 +253,12 @@ transport_cost <- data.frame(
   centroide9 = calc_transport_dist(9), 
   centroide10 = calc_transport_dist(10), 
   centroide11 = calc_transport_dist(11), 
-  centroide12 = calc_transport_dist(12), 
+  centroide12 = calc_transport_dist(12),
   centroide13 = calc_transport_dist(13),
   centroide14 = calc_transport_dist(14), 
   centroide15 = calc_transport_dist(15), 
   centroide16 = calc_transport_dist(16)
-  )
+)
 View(transport_cost)
 
 #prove
@@ -266,6 +266,12 @@ print(
   distanc(customer_locations$x[[1]], customer_locations$y[[1]],
         warehouse_locations$x[[1]], warehouse_locations$y[[1]])
 )
+
+transportcost_func <- function(i, j) {
+  customer <- customer_locations[i, ]
+  warehouse <- warehouse_locations[j, ]
+  sqrt((customer$x - warehouse$x)^2 + (customer$y - warehouse$y)^2)
+}
 
 #principal PLOT
 p <- ggplot(customer_locations, aes(x, y)) +
@@ -278,6 +284,29 @@ p <- ggplot(customer_locations, aes(x, y)) +
         axis.text = element_blank(), panel.grid = element_blank())
 p + ggtitle("Warehouse location problem",
             "Black dots are customers. Light red triangles show potential warehouse locations.")
+
+#solving model
+library(ompr)
+library(magrittr)
+n <- 77
+m <- 16
+model <- MIPModel() %>%
+  # 1 iff i gets assigned to warehouse j
+  add_variable(x[i, j], i = 1:n, j = 1:m, type = "binary") %>%
+  
+  # 1 iff warehouse j is built
+  add_variable(y[j], j = 1:m, type = "binary") %>%
+  
+  # maximize the preferences
+  set_objective(sum_expr(transportcost_func(i, j) * x[i, j], i = 1:n, j = 1:m) +    #trocar por transport_cost[i,j]
+                  sum_expr(warehouse_costs[j] * y[j], j = 1:m), "min") %>%           #trocar por warehouse_costs[j]
+  
+  # every customer needs to be assigned to a warehouse
+  add_constraint(sum_expr(x[i, j], j = 1:m) == 1, i = 1:n) %>% 
+  
+  # if a customer is assigned to a warehouse, then this warehouse must be built
+  add_constraint(x[i,j] <= y[j], i = 1:n, j = 1:m)
+model
 
 # Somar as populações das 77 cidades de delaware
 # Dividir a população de cada cidade pelo total somado (dplyr package)
@@ -296,6 +325,33 @@ p + ggtitle("Warehouse location problem",
 # melhorar vetor de custo de transporte, adicionando o custo de cada cidade para todos os armazéns (16), 
 # para assim vermos quais armazéns são os melhores
 # tentar recriar função de "transport cost" do warehouse locations
+
+#pegar a soma da coluna "i" do vetor de custo de transporte, e a "i" linha do custo fixo do vetor de armazéns.
+
+#Usar o modelo MIP do script warehouse.R, trocando a função "transportcost()" pelo valor i
+#no data frame "transport_cost", e trocar
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
