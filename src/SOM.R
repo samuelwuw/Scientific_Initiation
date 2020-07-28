@@ -9,8 +9,11 @@ df <- read.csv('database/uscitiesCsv.csv', header = TRUE, sep = ",")
 # Dellaware DATA FRAME with 2 Var (latitude and longitude), 77 cities
 df_del <- df[621:697, c(9,10,11)] 
 
+
+
 # data normalization
 data_train_matrix <- as.matrix(scale(df_del)) 
+
 
 som_grid <- somgrid(xdim = 4, ydim = 4, topo="hexagonal") # SOM 6x6, hexagonal
 
@@ -139,8 +142,8 @@ distanc <- function(Xc, Yc, Xw, Yw){
 #data frame customer locations
 customer_locations <- data.frame(
   id = 1:n,
-  x = data_train_matrix[,1],
-  y = data_train_matrix[,2],
+  x = df_del[,1],
+  y = df_del[,2],
   localiz,
   population = df_del_population$population
   
@@ -195,7 +198,7 @@ warehouse_costs <- c(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
 warehouse_size <- c(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
 meter_per_habitant <- 1
 for(i in 1:16){
-  warehouse_size[i] <- clustPop[i] * meter_per_habitant
+  warehouse_size[i] <- (clustPop[i] * meter_per_habitant) / 100
   warehouse_costs[i] <- warehouse_size[i] * centroid_costPerSquareMeter[i]
 }
 
@@ -235,7 +238,7 @@ calc_transport_dist <- function(id){
     D <- distanc(customer_locations$x[[centroid_counter]], customer_locations$y[[centroid_counter]],
                  warehouse_locations$x[[id]], warehouse_locations$y[[id]])
     
-    vec[centroid_counter] <- D * 2.5
+    vec[centroid_counter] <- D 
   }
   
   return(vec)
@@ -260,6 +263,7 @@ transport_cost <- data.frame(
   centroide16 = calc_transport_dist(16)
 )
 View(transport_cost)
+summary(transport_cost)
 
 #prove
 print(
@@ -270,7 +274,7 @@ print(
 transportcost_func <- function(i, j) {
   customer <- customer_locations[i, ]
   warehouse <- warehouse_locations[j, ]
-  sqrt((customer$x - warehouse$x)^2 + (customer$y - warehouse$y)^2)
+  (sqrt((customer$x - warehouse$x)^2 + (customer$y - warehouse$y)^2)) * 2.50 * 100 #substituir 100 pelo valor correto
 }
 
 transportcost_func(1,1)
@@ -308,7 +312,7 @@ model_MIP <- MIPModel() %>%
   
   # if a customer is assigned to a warehouse, then this warehouse must be built
   add_constraint(x[i,j] <= y[j], i = 1:n, j = 1:m)
-model
+model_MIP
 
 library(ompr.roi)
 library(ROI.plugin.glpk)
@@ -342,7 +346,8 @@ p +
           "Big red triangles show warehouses that will be built, light red are unused warehouse locations. 
 Dots represent customers served by the respective warehouses.")
 
-
+#fixed costs for setting up the 4 warehouses:
+sum(warehouse_costs[unique(matching$j)])
 
 
 
@@ -389,30 +394,11 @@ Dots represent customers served by the respective warehouses.")
 #no data frame "transport_cost", e trocar
 # (Problema no resultado do modelo mip)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#7) 
+# calcular a matriz com os dados originais (77 por 77), e outra com os dados normalizados.
+# tirar a média geral das duas matrizes, e divide a média dos dados originais pela média dos dados normalizados.
+# usar esse valor para montar a matriz "transport_cost", multiplicando a dist por esse valor
+# (esperar um valor alto)
 
 
 ##################################### population data normalization (not used) ######################
@@ -437,4 +423,44 @@ View(df_del_population)
 
 
 
+
+
+
+calc_dist_cityToCity <- function(id){
+  dataFrame <- data.frame{
+    
+  }
+  
+  for(city_counter in 1:77){
+    for(city2_counter in 1:77){
+      dataFrame$ <- distanc(df_del$lat[[city_counter]], df_del$lng[[city_counter]],
+                   df_del$lat[[city2_counter]], df_del$lng[[city2_counter]])
+      
+      vec[city_counter] <- D 
+    }
+  }
+  
+  return(vec)
+}
+
+transport_cost <- data.frame(
+  centroide1 = calc_transport_dist(1), 
+  centroide2 = calc_transport_dist(2), 
+  centroide3 = calc_transport_dist(3), 
+  centroide4 = calc_transport_dist(4), 
+  centroide5 = calc_transport_dist(5), 
+  centroide6 = calc_transport_dist(6), 
+  centroide7 = calc_transport_dist(7), 
+  centroide8 = calc_transport_dist(8),
+  centroide9 = calc_transport_dist(9), 
+  centroide10 = calc_transport_dist(10), 
+  centroide11 = calc_transport_dist(11), 
+  centroide12 = calc_transport_dist(12),
+  centroide13 = calc_transport_dist(13),
+  centroide14 = calc_transport_dist(14), 
+  centroide15 = calc_transport_dist(15), 
+  centroide16 = calc_transport_dist(16)
+)
+View(transport_cost)
+summary(transport_cost)
 
