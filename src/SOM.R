@@ -273,6 +273,8 @@ transportcost_func <- function(i, j) {
   sqrt((customer$x - warehouse$x)^2 + (customer$y - warehouse$y)^2)
 }
 
+transportcost_func(1,1)
+
 #principal PLOT
 p <- ggplot(customer_locations, aes(x, y)) +
   geom_point() +
@@ -290,7 +292,7 @@ library(ompr)
 library(magrittr)
 n <- 77
 m <- 16
-model <- MIPModel() %>%
+model_MIP <- MIPModel() %>%
   # 1 iff i gets assigned to warehouse j
   add_variable(x[i, j], i = 1:n, j = 1:m, type = "binary") %>%
   
@@ -308,28 +310,84 @@ model <- MIPModel() %>%
   add_constraint(x[i,j] <= y[j], i = 1:n, j = 1:m)
 model
 
+library(ompr.roi)
+library(ROI.plugin.glpk)
+result <- solve_model(model_MIP, with_ROI(solver = "glpk", verbose = TRUE))
+
+suppressPackageStartupMessages(library(dplyr))
+matching <- result %>% 
+  get_solution(x[i,j]) %>%
+  filter(value > .9) %>%  
+  select(i, j)
+
+
+#add the assignments to the previous plot
+plot_assignment <- matching %>% 
+  inner_join(customer_locations, by = c("i" = "id")) %>% 
+  inner_join(warehouse_locations, by = c("j" = "id"))
+customer_count <- matching %>% group_by(j) %>% summarise(n = n()) %>% rename(id = j)
+
+###### problema com fixed cost (o custo fixo deste código varia)
+plot_warehouses <- warehouse_locations %>% 
+  mutate(costs = warehouse_costs) %>% 
+  inner_join(customer_count, by = "id") %>% 
+  filter(id %in% unique(matching$j))
+p + 
+  geom_segment(data = plot_assignment, aes(x = x.y, y = y.y, xend = x.x, yend = y.x)) + 
+  geom_point(data  = plot_warehouses, color = "red", size = 3, shape = 17) +
+  ggrepel::geom_label_repel(data  = plot_warehouses, 
+                            aes(label = paste0("fixed costs:", costs, "; customers: ", n)), 
+                            size = 2, nudge_y = 20) + 
+  ggtitle(paste0("Cost optimal warehouse locations and customer assignment"),
+          "Big red triangles show warehouses that will be built, light red are unused warehouse locations. 
+Dots represent customers served by the respective warehouses.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#################################################################################################################
+######################################## OBJETIVOS ##############################################################
+#################################################################################################################
+
+#1)
 # Somar as populações das 77 cidades de delaware
 # Dividir a população de cada cidade pelo total somado (dplyr package)
 # Pegar o resultado de cada divisão (77 indices), e multiplica pela população real (google) de delaware (var realPop)
 # O resultado será a população aproximada de cada cidade
 
-
+#2)
 # Depois vamos estabelecer um valor de m² de armazém por habitante (1m² por habitante)
 # Multiplica esse valor pela população de cada cidade = tamanho de cada armazén na cidade
 # multiplicar pelos custos por M² que já estão no data frame
 
+#3)
 # adicionar 2 colunas ao warehouse locations:
 # uma será o tamanho du cluster ( a área de armazén = população * parmetro p)
 # a outra coluna custo total será o custo do armazén, que será a área do armazén * custo por m²
 
+#4)
 # melhorar vetor de custo de transporte, adicionando o custo de cada cidade para todos os armazéns (16), 
 # para assim vermos quais armazéns são os melhores
 # tentar recriar função de "transport cost" do warehouse locations
 
+#5)
 #pegar a soma da coluna "i" do vetor de custo de transporte, e a "i" linha do custo fixo do vetor de armazéns.
 
+#6)
 #Usar o modelo MIP do script warehouse.R, trocando a função "transportcost()" pelo valor i
 #no data frame "transport_cost", e trocar
+# (Problema no resultado do modelo mip)
 
 
 

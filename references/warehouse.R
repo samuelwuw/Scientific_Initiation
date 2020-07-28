@@ -17,6 +17,8 @@ warehouse_locations <- data.frame(
   y = round(runif(m) * grid_size)
 )
 #-------rnorm() X generates multivariate normal random variates in the space X
+############################     nosso custo fixo varia   ######################
+
 fixedcost <- round(rnorm(m, mean = grid_size * 10, sd = grid_size * 5))
   
 # -----build a functions that takes a customer and a warehouse and returns the transport cost
@@ -41,7 +43,6 @@ p + ggtitle("Warehouse location problem",
             "Black dots are customers. Light red triangles show potential warehouse locations.")
 #
 #---------------model in ompr
-#################objetivo#####################
 library(ompr)
 library(magrittr)
 model <- MIPModel() %>%
@@ -73,7 +74,6 @@ matching <- result %>%
   filter(value > .9) %>%  
   select(i, j)
 
-#####OBJETIVO######
 #add the assignments to the previous plot
 plot_assignment <- matching %>% 
   inner_join(customer_locations, by = c("i" = "id")) %>% 
