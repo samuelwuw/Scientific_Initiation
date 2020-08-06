@@ -1,5 +1,5 @@
 getwd()
-setwd("C:/Users/samue/Documents/www/IC/Scientific_Initiation/src")
+setwd("C:/Users/samue/Documents/www/IC/Scientific_Initiation/src/USA")
 
 library(kohonen)
 require(kohonen)
@@ -8,8 +8,6 @@ df <- read.csv('database/uscitiesCsv.csv', header = TRUE, sep = ",")
 
 # Dellaware DATA FRAME with 2 Var (latitude and longitude), 77 cities
 df_del <- df[621:697, c(9,10,11)] 
-
-
 
 # data normalization
 data_train_matrix <- as.matrix(scale(df_del)) 
@@ -142,8 +140,8 @@ distanc <- function(Xc, Yc, Xw, Yw){
 #data frame customer locations
 customer_locations <- data.frame(
   id = 1:n,
-  x = df_del[,1],
-  y = df_del[,2],
+  x = data_train_matrix[,1],
+  y = data_train_matrix[,2],
   localiz,
   population = df_del_population$population
   
@@ -271,6 +269,7 @@ print(
         warehouse_locations$x[[1]], warehouse_locations$y[[1]])
 )
 
+#TRANSPORT COST FUNCTION
 transportcost_func <- function(i, j) {
   customer <- customer_locations[i, ]
   warehouse <- warehouse_locations[j, ]
