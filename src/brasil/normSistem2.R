@@ -1,28 +1,28 @@
+#forma alternativa de normalização dos dados
 getwd()
 setwd("C:/Users/samue/Documents/www/IC/Scientific_Initiation/src/brasil")
 
 library(kohonen)
 require(kohonen)
+library(RSNNS)
+somFunc <- kohonen::som
 
 df <- read.csv('database/brCitiesCsv.csv', header = TRUE, sep = ",")
-View(df)
 
 #Base de dados com cidades proeminentes do nordeste, e sudeste
-#usedCities <- c(238:274)
 usedCities <- c(5:9, 30:60, 61:79, 104:122, 208:210, 231:242, 243:249, 260:266, 238:274, 275:276)
 df_cities <- df[usedCities, c(2,3,8)]
-View(df_cities)
+rownames(df_cities) <- NULL
 
-data_train_matrix <- as.matrix(scale(df_cities)) 
-View(data_train_matrix)
+#data_train_matrix <- as.matrix(scale(df_cities)) 
+data_train_matrix <- as.matrix(normalizeData(df_cities, type = "norm")) 
+colnames(data_train_matrix) <- c("lat", "lng", "population")
 
+som_grid <- somgrid(xdim = 3, ydim = 4, topo="hexagonal") # SOM 3x5, hexagonal
 
-som_grid <- somgrid(xdim = 4, ydim = 3, topo="hexagonal") # SOM 3x5, hexagonal
-
-
-som_model <- som(data_train_matrix, 
+som_model <- somFunc(data_train_matrix, 
                  grid=som_grid,  
-                 rlen=100, 
+                 rlen=300, 
                  alpha=c(0.05,0.01), 
                  keep.data = TRUE,
                  radius = 5)
@@ -61,7 +61,7 @@ wss <- (nrow(mydata)-1)*sum(apply(mydata,2,var))
 ######### Clusteriza??o dos N?s do SOM, pelo K-means (variando o K) ###########
 # Registra a Varia??o Interna (WSS) de cada Cluster e Soma essas varia??es
 
-for (i in 1:12) {
+for (i in 12) {
   wss[i] <- sum(kmeans(mydata, centers=i)$withinss)
 }
 
@@ -82,15 +82,13 @@ plot(som_cluster)
 plot(som_model, type="mapping", bgcol = pretty_palette[som_cluster], main = "Clusters") 
 add.cluster.boundaries(som_model, som_cluster)
 
-som_cluster
-
 colnames(localiz) <- c("node")
-
 
 #centroides de cada estado (16)
 centroides <- as.data.frame(som_model$codes)
 plot(centroides)
-View(centroides)
+
+centroides_norm <- as.data.frame(denormalizeData(centroides, getNormParameters(data_train_matrix)))
 
 #pontos de demanda
 plot(x = data_train_matrix[,1], y = data_train_matrix[,2], xlab = "X", ylab = "y")
@@ -139,7 +137,7 @@ customer_locations <- data.frame(
 )
 View(customer_locations)
 
-#calcula o custo do transporte entre o ponto de demanda e o seu armazÃ©m
+#calcula o custo do transporte entre o ponto de demanda e o seu arma
 distanc <- function(Xc, Yc, Xw, Yw){
   distance <- sqrt((Xw-Xc)**2+(Yw-Yc)**2)
   return(distance)
@@ -176,43 +174,22 @@ for(val in 1:m){
 View(centroid_costPerSquareMeter)
 
 #soma a população de cada centroide
-# verifica todas as cidades, e se estiver atrelada a um centroide, soma a sua população
-clustPop <- c(0,0,0,0,0,0,0,0,0,0,
-              0,0)
-#soma da latitude e longitude de todas as cidades de cada centroide
-clustX <- c(0,0,0,0,0,0,0,0,0,0,
-            0,0)
-clustY <- c(0,0,0,0,0,0,0,0,0,0,
-            0,0)
-centroidTotalCities <- c(0,0,0,0,0,0,0,0,0,0,
-                         0,0)
-#média da soma de x e y das cidades de cada centroide pelo total das cidades
-meanCentroidesX <- c(0,0,0,0,0,0,0,0,0,0,
-                    0,0)
-meanCentroidesY <- c(0,0,0,0,0,0,0,0,0,0,
-                    0,0)
+clustPop <- vector(length = m)
 
 for(i in 1:m){
   for(j in 1:n){
     if(customer_locations$localiz[j] == i){
       clustPop[i] <- clustPop[i] + customer_locations$population[j]
       
-      clustX[i] <- clustX[i] + customer_locations$x[j]
-      clustY[i] <- clustY[i] + customer_locations$y[j]
-      centroidTotalCities[i] <- centroidTotalCities[i] + 1
     }
   }
-    meanCentroidesX[i] <- clustX[i] / centroidTotalCities[i]
-    meanCentroidesY[i] <- clustY[i] / centroidTotalCities[i]
 }
-
+View(clustPop)
 
 
 #calc of warehouse size and cost
-warehouse_costs <- c(0,0,0,0,0,0,0,0,0,0,
-                     0,0)
-warehouse_size <- c(0,0,0,0,0,0,0,0,0,0,
-                    0,0)
+warehouse_costs <- vector(length = m)
+warehouse_size <- vector(length = m)
 meter_per_habitant <- 1
 for(i in 1:m){
   warehouse_size[i] <- (clustPop[i] * meter_per_habitant) / 100
@@ -221,10 +198,8 @@ for(i in 1:m){
 
 warehouse_locations <- data.frame(
   id = 1:centroid_id,
-  #x = centroides[,1],
-  #y = centroides[,2],
-  x = meanCentroidesX,
-  y = meanCentroidesY,
+  x = centroides_norm$V1,
+  y = centroides_norm$V2,
   dist_to_mean = centroidDistanceVector, #dist of each waarehouse to all warehouse mean
   cost_per_square_meter = centroid_costPerSquareMeter, #cost based on dist_to_mean quartiles (line 162)
   total_population = clustPop,
@@ -234,6 +209,7 @@ warehouse_locations <- data.frame(
 View(warehouse_locations)
 
 #calc of dist between customer and respectives warehouses
+#Normalizado
 for(val in customer_locations$id){
   D <- distanc(customer_locations$x[[val]], customer_locations$y[[val]],
                warehouse_locations$x[[customer_locations$localiz[[val]]]],
@@ -244,7 +220,6 @@ for(val in customer_locations$id){
 }
 View(customerDistanceVector)
 
-
 #haversine
 library(pracma)
 require(pracma)
@@ -253,43 +228,34 @@ require(pracma)
 transportcost_func <- function(i, j) {
   customer <- customer_locations[i, ]
   warehouse <- warehouse_locations[j, ]
-  #return(sqrt((customer$x - warehouse$x)^2 + (customer$y - warehouse$y)^2))  #substituir 100 pelo valor correto
-  haversine(c(customer$x, warehouse$x), c(customer$y, warehouse$y)) #substituir 100 pelo valor correto
+  # calcula o custo de transporte: 
+  haversine(c(customer$x, customer$y), c(warehouse$x, warehouse$y)) * (2.5/25) * (warehouse$warehouse_size * 12/0.3)
 }
-transportcost_func(1,1)
+transportcost_func(1,7)
 
 
 transportCostMatrixFact <- function(){
-  transport_cost <- matrix(nrow = 142, ncol = 12)
+  transport_cost <- matrix(nrow = n, ncol = m)
   
   for(row in 1:n){
     for(col in 1:m){
-      #transport_cost[row, col] <- transportcost_func(row, col)
-      transport_cost[row, col] <- haversine(c(customer_locations$x[row], customer_locations$y[row]), 
-                                            c(warehouse_locations$x[col], warehouse_locations$y[col]))
+      transport_cost[row, col] <- transportcost_func(row, col)
     }
   }
   
   return(transport_cost)
 }
-
 transport_cost <- as.data.frame(transportCostMatrixFact())
 View(transport_cost)
 summary(transport_cost)
 
-#prove
-print(
-  distanc(customer_locations$x[[1]], customer_locations$y[[1]],
-          warehouse_locations$x[[1]], warehouse_locations$y[[1]])
-)
-
-grid_size <- 1
+grid_size <- 0
 #principal PLOT
 p <- ggplot(customer_locations, aes(x, y)) +
   geom_point() +
   geom_point(data = warehouse_locations, color = "red", alpha = 0.5, shape = 17) +
-  scale_x_continuous(limits = c(-20, grid_size)) +
-  scale_y_continuous(limits = c(-50, grid_size)) +
+  scale_x_continuous(limits = c(-53, grid_size)) +
+  scale_y_continuous(limits = c(-53, grid_size)) +
   theme(axis.title = element_blank(),
         axis.ticks = element_blank(),
         axis.text = element_blank(), panel.grid = element_blank())
@@ -299,6 +265,8 @@ p + ggtitle("Warehouse location problem",
 #solving model
 library(ompr)
 library(magrittr)
+#masked functions: and, mod, or
+
 model_MIP <- MIPModel() %>%
   # 1 iff i gets assigned to warehouse j
   add_variable(x[i, j], i = 1:n, j = 1:m, type = "binary") %>%
@@ -309,6 +277,8 @@ model_MIP <- MIPModel() %>%
   # maximize the preferences
   set_objective(sum_expr(transportcost_func(i, j) * x[i, j], i = 1:n, j = 1:m) +    #trocar por transport_cost[i,j]
                   sum_expr(warehouse_costs[j] * y[j], j = 1:m), "min") %>%           #trocar por warehouse_costs[j]
+  
+  #set_objective(sum_expr(transportcost_func(i, j) * x[i, j], i = 1:n, j = 1:m), "min") %>%           
   
   # every customer needs to be assigned to a warehouse
   add_constraint(sum_expr(x[i, j], j = 1:m) == 1, i = 1:n) %>% 
@@ -345,7 +315,7 @@ p +
   geom_segment(data = plot_assignment, aes(x = x.y, y = y.y, xend = x.x, yend = y.x)) + 
   geom_point(data  = plot_warehouses, color = "red", size = 3, shape = 17) +
   ggrepel::geom_label_repel(data  = plot_warehouses, 
-                            aes(label = paste0("fixed costs:", costs, "; customers: ", n)), 
+                            aes(label = paste0("fixed costs:", costs, "; customers: ", n )), 
                             size = 3, nudge_y = 20) + 
   ggtitle(paste0("Cost optimal warehouse locations and customer assignment"),
           "Big red triangles show warehouses that will be built, light red are unused warehouse locations. 
