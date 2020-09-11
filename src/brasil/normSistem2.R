@@ -10,7 +10,8 @@ somFunc <- kohonen::som
 df <- read.csv('database/brCitiesCsv.csv', header = TRUE, sep = ",")
 
 #Base de dados com cidades proeminentes do nordeste, e sudeste
-usedCities <- c(5:9, 30:60, 61:79, 104:122, 208:210, 231:242, 243:249, 260:266, 238:274, 275:276)
+usedCities <- c(4:9, 30:60, 61:79, 81:85, 104:122, 141:183, 208:210, 231:242, 243:249, 250:259, 260:266, 
+                328:374, 375:376)
 df_cities <- df[usedCities, c(2,3,8)]
 rownames(df_cities) <- NULL
 
@@ -120,7 +121,7 @@ centroidCostVector <- c()
 localiz <- as.matrix(som_model$unit.classif)
 
 m <- 12 #usado em warehouse locations, id  (15)
-n <- 142 #usado em customer locations, id (142)
+n <- 211 #usado em customer locations, id (142)
 D <- 0
 x_mean <- mean(centroides[,1]) #media x dos centroides  
 y_mean <- mean(centroides[,2]) #media y dos centroides
@@ -229,7 +230,8 @@ transportcost_func <- function(i, j) {
   customer <- customer_locations[i, ]
   warehouse <- warehouse_locations[j, ]
   # calcula o custo de transporte: 
-  haversine(c(customer$x, customer$y), c(warehouse$x, warehouse$y)) * (2.5/25) * (warehouse$warehouse_size * 12/0.3)
+  return(haversine(c(customer$x, customer$y), c(warehouse$x, warehouse$y)) 
+         * (2.5/25) * (warehouse$warehouse_size * 12/0.3))
 }
 transportcost_func(1,7)
 
@@ -254,8 +256,8 @@ grid_size <- 0
 p <- ggplot(customer_locations, aes(x, y)) +
   geom_point() +
   geom_point(data = warehouse_locations, color = "red", alpha = 0.5, shape = 17) +
-  scale_x_continuous(limits = c(-53, grid_size)) +
-  scale_y_continuous(limits = c(-53, grid_size)) +
+  scale_x_continuous(limits = c(-25, -2)) +
+  scale_y_continuous(limits = c(-53, -33)) +
   theme(axis.title = element_blank(),
         axis.ticks = element_blank(),
         axis.text = element_blank(), panel.grid = element_blank())
@@ -277,8 +279,6 @@ model_MIP <- MIPModel() %>%
   # maximize the preferences
   set_objective(sum_expr(transportcost_func(i, j) * x[i, j], i = 1:n, j = 1:m) +    #trocar por transport_cost[i,j]
                   sum_expr(warehouse_costs[j] * y[j], j = 1:m), "min") %>%           #trocar por warehouse_costs[j]
-  
-  #set_objective(sum_expr(transportcost_func(i, j) * x[i, j], i = 1:n, j = 1:m), "min") %>%           
   
   # every customer needs to be assigned to a warehouse
   add_constraint(sum_expr(x[i, j], j = 1:m) == 1, i = 1:n) %>% 
