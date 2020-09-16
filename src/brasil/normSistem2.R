@@ -1,4 +1,3 @@
-#forma alternativa de normaliza√ß√£o dos dados
 getwd()
 setwd("C:/Users/samue/Documents/www/IC/Scientific_Initiation/src/brasil")
 
@@ -27,6 +26,13 @@ som_model <- somFunc(data_train_matrix,
                  alpha=c(0.05,0.01), 
                  keep.data = TRUE,
                  radius = 5)
+
+#centroides de cada estado (12)
+centroides <- as.data.frame(som_model$codes)
+View(centroides)
+
+#processo de denormalizaÁ„o.
+centroides_norm <- as.data.frame(denormalizeData(centroides, getNormParameters(data_train_matrix)))
 
 #plots of SOM model
 plot(som_model, type="changes")
@@ -84,12 +90,6 @@ plot(som_model, type="mapping", bgcol = pretty_palette[som_cluster], main = "Clu
 add.cluster.boundaries(som_model, som_cluster)
 
 colnames(localiz) <- c("node")
-
-#centroides de cada estado (16)
-centroides <- as.data.frame(som_model$codes)
-plot(centroides)
-
-centroides_norm <- as.data.frame(denormalizeData(centroides, getNormParameters(data_train_matrix)))
 
 #pontos de demanda
 plot(x = data_train_matrix[,1], y = data_train_matrix[,2], xlab = "X", ylab = "y")
