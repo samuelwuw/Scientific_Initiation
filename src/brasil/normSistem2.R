@@ -18,7 +18,7 @@ rownames(df_cities) <- NULL
 data_train_matrix <- as.matrix(normalizeData(df_cities, type = "norm")) 
 colnames(data_train_matrix) <- c("lat", "lng", "population")
 
-som_grid <- somgrid(xdim = 3, ydim = 4, topo="hexagonal") # SOM 3x5, hexagonal
+som_grid <- somgrid(xdim = 3, ydim = 4, topo="hexagonal") # SOM 3x4, hexagonal
 
 som_model <- somFunc(data_train_matrix, 
                  grid=som_grid,  
@@ -46,61 +46,20 @@ plot(som_model, type="codes", main = "codes")
 
 som_model$unit.classif 
 
-#heatmaps:
-#allows the visualisation of the distribution of a single variable across the map
-plot(som_model, type = "property", 
-     property = getCodes(som_model)[,1],
-     main=colnames(getCodes(som_model))[1]) 
-plot(som_model, type = "property",
-     property = getCodes(som_model)[,2],
-     main=colnames(getCodes(som_model))[2]) 
-plot(som_model, type = "property",
-     property = getCodes(som_model)[,3],
-     main=colnames(getCodes(som_model))[3]) 
-
-
-# Montagem de DF com os Neur?nios do SOM para Washington
-mydata <- as.data.frame(som_model$codes)
-
-# cALCULANDO sOMAS DE qUADRADOS (Vari?ncias) para o Mydata - WASHINGTON
-wss <- (nrow(mydata)-1)*sum(apply(mydata,2,var)) 
-
-######### Clusteriza??o dos N?s do SOM, pelo K-means (variando o K) ###########
-# Registra a Varia??o Interna (WSS) de cada Cluster e Soma essas varia??es
-
-for (i in 12) {
-  wss[i] <- sum(kmeans(mydata, centers=i)$withinss)
-}
-
-# Plotagem do Gr?fico de Cotovelo - WSS vs. K
-plot(wss, main = "nrow*variances")
-
-pretty_palette <- c("#1f77b4", '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2')
-
-#################  Hierarchical Clustering - hclust()  #########################
-#################  Distance Matrix Computation dist()  #########################
-##### Monta Clusters da Matriz de Distancias entre os Neuronios ###########
-#### cuttree()  -  Cut a Tree into Groups of Data
-### Cuts a tree, e.g., as resulting from hclust, into several groups either by specifying the desired number(s) of groups or the cut height(s)
-#### cutree(tree, k = NULL, h = NULL)
-
-som_cluster <- cutree(hclust(dist(as.data.frame(som_model$codes))), 6)
-plot(som_cluster)
-plot(som_model, type="mapping", bgcol = pretty_palette[som_cluster], main = "Clusters") 
-add.cluster.boundaries(som_model, som_cluster)
-
-colnames(localiz) <- c("node")
-
-#pontos de demanda
-plot(x = data_train_matrix[,1], y = data_train_matrix[,2], xlab = "X", ylab = "y")
-
 #########################################################################
 ##########################     PLOTS     ################################
 #########################################################################
 
-
 library(ggplot2)
 require(ggplot2)
+
+m <- 12 #usado em warehouse locations
+n <- 211 #usado em customer locations
+D <- 0
+x_mean <- mean(centroides[,1]) #media x dos centroides  
+y_mean <- mean(centroides[,2]) #media y dos centroides
+
+centroid_id <- 12
 
 #population
 df_cities_population <- df[usedCities, c(1,8)] #population column
@@ -108,7 +67,7 @@ df_cities_population <- df[usedCities, c(1,8)] #population column
 #vetor com distâncias entre os customers e warehouses, e centroides para sua media 
 customerDistanceVector <- c()
 
-#vetor com distâncias entre a média da posição dos centroides, e cada um deles
+#vetor com distâncias entre a media da posit dos centroides, e cada um deles
 centroidDistanceVector <- c()
 
 #vector with costs based in distance
@@ -118,21 +77,14 @@ customerCostVector <- c()
 centroidCostVector <- c()
 
 #indica a qual warehouse cada customer está atrelado
-localiz <- as.matrix(som_model$unit.classif)
-
-m <- 12 #usado em warehouse locations, id  (15)
-n <- 211 #usado em customer locations, id (142)
-D <- 0
-x_mean <- mean(centroides[,1]) #media x dos centroides  
-y_mean <- mean(centroides[,2]) #media y dos centroides
-centroid_id <- 12
+#localiz <- as.matrix(som_model$unit.classif)
 
 #data frame customer locations
 customer_locations <- data.frame(
   id = 1:n,
   x = df_cities[,1],
   y = df_cities[,2],
-  localiz,
+  localiz = as.matrix(som_model$unit.classif),
   population = df_cities_population$population
   
 )
@@ -144,7 +96,7 @@ distanc <- function(Xc, Yc, Xw, Yw){
   return(distance)
 }
 
-#cálculo da distância entre cada centroide e a mádia dos centroides
+#c�lculo da dist�ncia entre cada centroide e a m�dia dos centroides
 for(val in 1:m){
   D <- distanc(centroides$lat[[val]], centroides$lng[[val]], 
                x_mean, y_mean)
@@ -174,9 +126,8 @@ for(val in 1:m){
 } 
 View(centroid_costPerSquareMeter)
 
-#soma a população de cada centroide
+#soma a popula��o de cada centroide
 clustPop <- vector(length = m)
-
 for(i in 1:m){
   for(j in 1:n){
     if(customer_locations$localiz[j] == i){
@@ -186,7 +137,6 @@ for(i in 1:m){
   }
 }
 View(clustPop)
-
 
 #calc of warehouse size and cost
 warehouse_costs <- vector(length = m)
@@ -306,9 +256,9 @@ customer_count <- matching %>% group_by(j) %>% summarise(n = n()) %>% rename(id 
 
 ###### problema com fixed cost (o custo fixo deste código varia)
 #armazéns escolhidos
-plot_warehouses <- warehouse_locations %>% 
-  mutate(costs = warehouse_costs) %>% 
-  inner_join(customer_count, by = "id") %>% 
+plot_warehouses <- warehouse_locations %>%
+  mutate(costs = warehouse_costs) %>%
+  inner_join(customer_count, by = "id") %>%
   filter(id %in% unique(matching$j))
 
 p + 
@@ -318,8 +268,8 @@ p +
                             aes(label = paste0("fixed costs:", costs, "; customers: ", n )), 
                             size = 3, nudge_y = 20) + 
   ggtitle(paste0("Cost optimal warehouse locations and customer assignment"),
-          "Big red triangles show warehouses that will be built, light red are unused warehouse locations. 
-Dots represent customers served by the respective warehouses.")
+          "Big red triangles show warehouses that will be built, light red are unused warehouse 
+          locations. Dots represent customers served by the respective warehouses.")
 
 #fixed costs for setting up the 4 warehouses:
 sum(warehouse_costs[unique(matching$j)])
