@@ -9,8 +9,8 @@ somFunc <- kohonen::som
 df <- read.csv('database/brCitiesCsv.csv', header = TRUE, sep = ",")
 
 #Base de dados com cidades proeminentes do nordeste, e sudeste
-usedCities <- c(4:9, 30:60, 61:79, 81:85, 104:122, 141:183, 208:210, 231:242, 243:249, 250:259, 260:266, 
-                328:374, 375:376)
+usedCities <- c(4:9, 30:60, 61:79, 81:85, 104:122, 141:183, 208:210, 231:242, 
+                243:249, 250:259, 260:266, 328:374, 375:376)
 df_cities <- df[usedCities, c(2,3,8)]
 rownames(df_cities) <- NULL
 
