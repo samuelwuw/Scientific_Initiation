@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<instance>
+    <info>
+        <dataset>Christofides and Eilon 1969 — Set E</dataset>
+        <name>E-n023-k03</name>
+    </info>
+    <network>
+        <nodes>
+            <node id="1" type="0">
+                <cx>266.0</cx>
+                <cy>235.0</cy>
+            </node>
+            <node id="2" type="1">
+                <cx>295.0</cx>
+                <cy>272.0</cy>
+            </node>
+            <node id="3" type="1">
+                <cx>301.0</cx>
+                <cy>258.0</cy>
+            </node>
+            <node id="4" type="1">
+                <cx>309.0</cx>
+                <cy>260.0</cy>
+            </node>
+            <node id="5" type="1">
+                <cx>217.0</cx>
+                <cy>274.0</cy>
+            </node>
+            <node id="6" type="1">
+                <cx>218.0</cx>
+                <cy>278.0</cy>
+            </node>
+            <node id="7" type="1">
+                <cx>282.0</cx>
+                <cy>267.0</cy>
+            </node>
+            <node id="8" type="1">
+                <cx>242.0</cx>
+                <cy>249.0</cy>
+            </node>
+            <node id="9" type="1">
+                <cx>230.0</cx>
+                <cy>262.0</cy>
+            </node>
+            <node id="10" type="1">
+                <cx>249.0</cx>
+                <cy>268.0</cy>
+            </node>
+            <node id="11" type="1">
+                <cx>256.0</cx>
+                <cy>267.0</cy>
+            </node>
+            <node id="12" type="1">
+                <cx>265.0</cx>
+                <cy>257.0</cy>
+            </node>
+            <node id="13" type="1">
+                <cx>267.0</cx>
+                <cy>242.0</cy>
+            </node>
+            <node id="14" type="1">
+                <cx>259.0</cx>
+                <cy>265.0</cy>
+            </node>
+            <node id="15" type="1">
+                <cx>315.0</cx>
+                <cy>233.0</cy>
+            </node>
+            <node id="16" type="1">
+                <cx>329.0</cx>
+                <cy>252.0</cy>
+            </node>
+            <node id="17" type="1">
+                <cx>318.0</cx>
+                <cy>252.0</cy>
+            </node>
+            <node id="18" type="1">
+                <cx>329.0</cx>
+                <cy>224.0</cy>
+            </node>
+            <node id="19" type="1">
+                <cx>267.0</cx>
+                <cy>213.0</cy>
+            </node>
+            <node id="20" type="1">
+                <cx>275.0</cx>
+                <cy>192.0</cy>
+            </node>
+            <node id="21" type="1">
+                <cx>303.0</cx>
+                <cy>201.0</cy>
+            </node>
+            <node id="22" type="1">
+                <cx>208.0</cx>
+                <cy>217.0</cy>
+            </node>
+            <node id="23" type="1">
+                <cx>326.0</cx>
+                <cy>181.0</cy>
+            </node>
+        </nodes>
+        <euclidean/>
+        <decimals>0</decimals>
+    </network>
+    <fleet>
+        <vehicle_profile type="0">
+            <departure_node>1</departure_node>
+            <arrival_node>1</arrival_node>
+            <capacity>4500.0</capacity>
+        </vehicle_profile>
+    </fleet>
+    <requests>
+        <request id="1" node="2">
+            <quantity>125.0</quantity>
+        </request>
+        <request id="2" node="3">
+            <quantity>84.0</quantity>
+        </request>
+        <request id="3" node="4">
+            <quantity>60.0</quantity>
+        </request>
+        <request id="4" node="5">
+            <quantity>500.0</quantity>
+        </request>
+        <request id="5" node="6">
+            <quantity>300.0</quantity>
+        </request>
+        <request id="6" node="7">
+            <quantity>175.0</quantity>
+        </request>
+        <request id="7" node="8">
+            <quantity>350.0</quantity>
+        </request>
+        <request id="8" node="9">
+            <quantity>150.0</quantity>
+        </request>
+        <request id="9" node="10">
+            <quantity>1100.0</quantity>
+        </request>
+        <request id="10" node="11">
+            <quantity>4100.0</quantity>
+        </request>
+        <request id="11" node="12">
+            <quantity>225.0</quantity>
+        </request>
+        <request id="12" node="13">
+            <quantity>300.0</quantity>
+        </request>
+        <request id="13" node="14">
+            <quantity>250.0</quantity>
+        </request>
+        <request id="14" node="15">
+            <quantity>500.0</quantity>
+        </request>
+        <request id="15" node="16">
+            <quantity>150.0</quantity>
+        </request>
+        <request id="16" node="17">
+            <quantity>100.0</quantity>
+        </request>
+        <request id="17" node="18">
+            <quantity>250.0</quantity>
+        </request>
+        <request id="18" node="19">
+            <quantity>120.0</quantity>
+        </request>
+        <request id="19" node="20">
+            <quantity>600.0</quantity>
+        </request>
+        <request id="20" node="21">
+            <quantity>500.0</quantity>
+        </request>
+        <request id="21" node="22">
+            <quantity>175.0</quantity>
+        </request>
+        <request id="22" node="23">
+            <quantity>75.0</quantity>
+        </request>
+    </requests>
+</instance>
